@@ -1,4 +1,3 @@
-
 """Tests for config loading, overrides and validation."""
 
 import pytest

@@ -68,9 +68,7 @@ def load_config(path: str | Path, overrides: list[str] | None = None) -> dict[st
         _apply_override(config, override)
 
     if config["scene_repr"] not in SCENE_REPRS:
-        raise ConfigError(
-            f"scene_repr must be one of {SCENE_REPRS}, got: {config['scene_repr']!r}"
-        )
+        raise ConfigError(f"scene_repr must be one of {SCENE_REPRS}, got: {config['scene_repr']!r}")
     return config
 
 
