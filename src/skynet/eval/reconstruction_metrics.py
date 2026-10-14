@@ -41,7 +41,18 @@ def fid_score(
     Needs well over 2048 samples per set for a reliable value with feature=2048;
     with fewer, the result is only indicative.
     """
-    # Imported here so that Chamfer-only code does not pay for the heavy dependency.
+    for name, tensor in [("real", real), ("fake", fake)]:
+        if tensor.ndim != 4:
+            raise ValueError(
+                f"'{name}' tensor must have 4 dimensions (B, C, H, W), got {tensor.ndim}."
+            )
+        if tensor.shape[1] != 3:
+            raise ValueError(
+                f"'{name}' tensor must have 3 channels (C=3), got shape {tensor.shape}."
+            )
+        if tensor.min() < 0.0 or tensor.max() > 1.0:
+            raise ValueError(f"'{name}' tensor values must be strictly in range [0.0, 1.0].")
+
     from torchmetrics.image.fid import FrechetInceptionDistance
 
     metric = FrechetInceptionDistance(feature=feature, normalize=True).to(device)

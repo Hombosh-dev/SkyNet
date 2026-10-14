@@ -74,3 +74,37 @@ def test_fid_orders_distributions_and_is_deterministic():
     different = fid_score(a, c, feature=64)
     assert same < different
     assert fid_score(a, c, feature=64) == pytest.approx(different)
+
+
+def test_fid_identical_batches():
+    """Sanity check: FID between identical batches should be near zero."""
+    pytest.importorskip("torch_fidelity")
+    torch.manual_seed(0)
+    a = torch.rand(10, 3, 32, 32)
+    score = fid_score(a, a, feature=64)
+    assert score < 1e-4
+
+
+def test_fid_rejects_bad_shape():
+    """Ensure fid_score catches wrong dimensions or channel counts."""
+    valid = torch.rand(2, 3, 32, 32)
+
+    with pytest.raises(ValueError, match="dimensions"):
+        fid_score(torch.rand(3, 32, 32), valid)
+
+    with pytest.raises(ValueError, match="channels"):
+        fid_score(torch.rand(2, 1, 32, 32), valid)
+
+    with pytest.raises(ValueError, match="channels"):
+        fid_score(torch.rand(2, 32, 32, 3), valid)
+
+
+def test_fid_rejects_bad_range():
+    """Ensure fid_score catches unnormalized data."""
+    valid = torch.rand(2, 3, 32, 32)
+
+    with pytest.raises(ValueError, match="range"):
+        fid_score(torch.rand(2, 3, 32, 32) * 255.0, valid)  # [0, 255]
+
+    with pytest.raises(ValueError, match="range"):
+        fid_score(torch.rand(2, 3, 32, 32) - 0.5, valid)  # Negative samples
