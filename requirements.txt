@@ -9,3 +9,6 @@ joblib==1.5.3
 PyYAML==6.0.3
 streamlit==1.61.1
 huggingface_hub==1.27.0
+torch>=2.5
+torchmetrics[image]>=1.4
+pyyaml>=6.0
