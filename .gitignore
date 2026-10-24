@@ -238,3 +238,13 @@ models/*
 
 # Env secrets
 .env
+
+# Dataset archives and raw dumps
+*.tar
+*.tgz
+*.tar.gz
+*.zip
+*.bin
+*.pcd
+data/sets/
+
