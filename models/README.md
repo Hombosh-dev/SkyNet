@@ -7,7 +7,7 @@ in git history.
 
 | Representation | Code | Checkpoint |
 |---|---|---|
-| Object-centric | `src/skynet/models/object_centric/` | none yet (baselines need no training) |
+| Object-centric | `src/skynet/models/object_centric/`, `notebooks/ObjectCentric_Representation.ipynb` | none yet (baselines need no training) |
 | BEV | `notebooks/BEVFusion_Encoder.ipynb` | none committed |
 | Latent BEV | planned | — |
 

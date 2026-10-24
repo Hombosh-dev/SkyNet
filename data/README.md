@@ -39,11 +39,13 @@ contains non-annotated sweeps between keyframes.
 
 ## How to get it
 
-Register at nuscenes.org, download `v1.0-mini.tgz` (~4 GB) and extract it so that the
-folder contains `samples/`, `sweeps/`, `maps/` and `v1.0-mini/`. Point
-`paths.data_root` in `config/default.yaml` (or `--data-root`) to that folder. The
-notebook downloads and extracts mini by itself. Raw archives are never committed;
-their checksums go to `data/raw/CHECKSUMS.txt`.
+Nothing to do by hand for mini: both notebooks download it themselves, and
+`scripts/object_centric_report.py` looks for it in `--data-root`, `$NUSCENES_ROOT`,
+`paths.data_root` (`data/nuscenes`, gitignored) and the usual Colab / Kaggle folders,
+and otherwise streams the archive and keeps only the JSON tables (~40 MB). For the
+full dataset, register at nuscenes.org, extract the archives into one folder with
+`samples/`, `sweeps/`, `maps/` and `v1.0-*/`, and point `$NUSCENES_ROOT` to it. Raw
+archives are never committed; their checksums go to `data/raw/CHECKSUMS.txt`.
 
 ## Personal data
 

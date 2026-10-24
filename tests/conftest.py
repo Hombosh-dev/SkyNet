@@ -140,7 +140,12 @@ def make_nuscenes(tmp_path):
 
 
 @pytest.fixture
-def tables(make_nuscenes):
+def nuscenes_root(make_nuscenes):
+    return make_nuscenes()
+
+
+@pytest.fixture
+def tables(nuscenes_root):
     from skynet.data.nuscenes import NuScenesTables
 
-    return NuScenesTables(make_nuscenes())
+    return NuScenesTables(nuscenes_root)

@@ -10,10 +10,11 @@
       "L2_avg_m": 10.02
     },
     "constant_velocity_baseline": {
-      "L2_1s_m": 1.15,
-      "L2_2s_m": 2.68,
-      "L2_3s_m": 4.42,
-      "L2_avg_m": 2.75
+      "L2_1s_m": null,
+      "L2_2s_m": null,
+      "L2_3s_m": null,
+      "L2_avg_m": null,
+      "note": "recompute with the past-only baseline (src/skynet/baselines/ego.py); the previous values used the first future waypoint"
     },
     "bevfusion_egoplanner": {
       "L2_1s_m": 0.38,

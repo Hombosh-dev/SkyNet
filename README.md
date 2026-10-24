@@ -7,7 +7,7 @@ A reproducible benchmark of world models for autonomous driving on nuScenes. We 
 
 | Representation | What the model sees | Status |
 |---|---|---|
-| **Object-centric** | Every agent as a feature vector (box, heading, velocity, class) | Scene tensor + baselines in `src/skynet/models/object_centric/` |
+| **Object-centric** | Every agent as a feature vector (box, heading, velocity, class) | Scene tensor + baselines, `ObjectCentric_Representation.ipynb` |
 | **BEV** | Camera + LiDAR fused into a top-down grid | BEVFusion encoder + EgoPlanner in the notebook |
 | **Latent BEV** | The BEV grid compressed by an autoencoder | Planned |
 
@@ -21,16 +21,17 @@ A reproducible benchmark of world models for autonomous driving on nuScenes. We 
 - **Velocity:** backward difference to the previous annotation, so frame *t* never uses information from later frames.
 - **Metrics:** ADE / FDE / miss rate (> 2 m) at 1, 2 and 3 s, next to the shared L2 and collision rate.
 
-```bash
-python scripts/object_centric_report.py --data-root /path/to/nuscenes   # writes results/object_centric_metrics.json
-```
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Hombosh-dev/SkyNet/blob/feat/object-centric-repr/notebooks/ObjectCentric_Representation.ipynb)
+
+* **Notebook:** [`notebooks/ObjectCentric_Representation.ipynb`](notebooks/ObjectCentric_Representation.ipynb), self-contained: fetches the nuScenes mini tables by itself, checks every scene for object loss, plots the agents, their forecasts and an animated scene, and prints the tables below.
+* **Script:** `python scripts/object_centric_report.py` finds nuScenes (or downloads the mini tables) and writes `results/object_centric_metrics.json`.
 
 | Baseline (nuScenes mini, all agents) | ADE @ 1s (m) ↓ | ADE @ 2s (m) ↓ | ADE @ 3s (m) ↓ | FDE @ 3s (m) ↓ | Miss rate @ 3s ↓ |
 |---|:---:|:---:|:---:|:---:|:---:|
 | Persistence | — | — | — | — | — |
 | Constant Velocity | — | — | — | — | — |
 
-*Fill the rows with the table printed by the script.*
+*Fill the rows with the table printed by the notebook or the script.*
 
 ---
 
@@ -49,8 +50,10 @@ Evaluation of planning displacement error ($L_2$ error in meters, lower is bette
 | Method / Model | L2 @ 1s (m) ↓ | L2 @ 2s (m) ↓ | L2 @ 3s (m) ↓ | L2 Avg (m) ↓ | Description |
 |---|:---:|:---:|:---:|:---:|---|
 | **Zero-Motion Baseline** | 4.82 | 9.94 | 15.31 | 10.02 | Stationary vehicle assumption ($x=0, y=0$) |
-| **Constant Velocity** | 1.15 | 2.68 | 4.42 | 2.75 | Linear extrapolation of initial velocity |
+| **Constant Velocity** | — | — | — | — | Linear extrapolation of the last observed velocity (past only) |
 | **SkyNet (BEVFusion + EgoPlanner)** | **0.38** | **0.89** | **1.52** | **0.93** | **Multimodal BEV representation + planner** |
+
+The constant-velocity row is being recomputed: the notebook version took its velocity from the first future waypoint. The past-only replacement (`src/skynet/baselines/ego.py`) is printed by the object-centric notebook and script.
 
 ### Interactive Notebook
 
@@ -71,8 +74,8 @@ All representations use the same data split, horizons (1/2/3 s = 2/4/6 keyframes
 
 ```
 .
-├── src/skynet/           # Package: config, nuScenes reader, object-centric representation, baselines, metrics
-├── notebooks/            # BEVFusion_Encoder.ipynb (Colab-ready BEV pipeline)
+├── src/skynet/           # Package: config, nuScenes reader/download, object-centric representation, baselines, metrics
+├── notebooks/            # BEVFusion_Encoder.ipynb (BEV), ObjectCentric_Representation.ipynb (object-centric)
 ├── tests/                # pytest suite for config, metrics, nuScenes reader, object-centric representation
 ├── config/default.yaml   # Representation switch, frame counts, horizons, paths
 ├── data/                 # Data card and raw archive checksums

@@ -3,7 +3,7 @@
 | File | Written by | Contains |
 |---|---|---|
 | `metrics.json` | BEV notebook, benchmark cell (`notebooks/BEVFusion_Encoder.ipynb`) | Ego L2 at 1/2/3 s of the BEV planner and the planning baselines |
-| `object_centric_metrics.json` | `python scripts/object_centric_report.py` | Object-centric tensor statistics per scene, the no-object-loss check, ADE / FDE / miss rate of the object baselines |
+| `object_centric_metrics.json` | `python scripts/object_centric_report.py` (the object-centric notebook saves the same report) | Object-centric tensor statistics per scene, the no-object-loss check, ADE / FDE / miss rate of the object baselines, L2 of the past-only ego baselines |
 | `experiments.md` | by hand | Experiment log for all representations |
 | `figures/`, `demo/` | notebooks | Plots and animations used in the README and slides |
 

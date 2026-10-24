@@ -2,13 +2,18 @@
 
 Usage::
 
-    python scripts/object_centric_report.py --data-root /path/to/nuscenes
+    python scripts/object_centric_report.py
+
+nuScenes is looked up in ``--data-root``, ``$NUSCENES_ROOT``, ``paths.data_root`` and
+the usual Colab / Kaggle folders; if it is nowhere, the JSON tables of v1.0-mini are
+downloaded into ``paths.data_root`` (the 4 GB archive is streamed, ~40 MB is kept).
 
 Checks that every annotation of every scene lands in the tensor (no object loss),
 evaluates the persistence and constant-velocity baselines with ADE / FDE / miss rate
-at 1, 2 and 3 s, writes ``results/object_centric_metrics.json`` and prints Markdown
-tables for the README. Baselines are not trained, so evaluating on all mini scenes
-(the default) involves no train/test leakage.
+at 1, 2 and 3 s and the past-only ego baselines with L2, writes
+``results/object_centric_metrics.json`` and prints Markdown tables for the README.
+Baselines are not trained, so evaluating on all mini scenes (the default) involves
+no train/test leakage.
 """
 
 from __future__ import annotations
@@ -20,8 +25,10 @@ from pathlib import Path
 
 import torch
 
+from skynet.baselines.ego import evaluate_ego_baselines
 from skynet.baselines.object_centric import BASELINES, forecast_windows
 from skynet.config import load_config
+from skynet.data.download import find_or_download
 from skynet.data.nuscenes import NuScenesTables
 from skynet.eval.object_metrics import displacement_errors
 from skynet.models.object_centric.scene_repr import FEATURES, build_object_scene
@@ -68,10 +75,18 @@ def main() -> None:
     args = parser.parse_args()
 
     cfg = load_config(args.config)
-    tables = NuScenesTables(args.data_root or cfg["paths"]["data_root"], cfg["data"]["version"])
+    version = cfg["data"]["version"]
+    root = find_or_download(
+        args.data_root or cfg["paths"]["data_root"], cfg["paths"]["data_root"], version
+    )
+    print(f"nuScenes tables: {root / version}")
+    tables = NuScenesTables(root, version)
     names = tables.split_scene_names(args.split)
     stats = {name: scene_stats(tables, name) for name in names}
     metrics = evaluate(tables, names, cfg["data"]["future_frames"])
+    ego = {args.split: evaluate_ego_baselines(tables, names)}
+    if "scene-0061" in tables.scene_by_name:  # the scene the BEV notebook benchmarks on
+        ego["scene-0061 (as in the BEV notebook)"] = evaluate_ego_baselines(tables, ["scene-0061"])
 
     report = {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
@@ -81,6 +96,7 @@ def main() -> None:
         "all_scenes_lossless": all(s["no_object_loss"] for s in stats.values()),
         "scenes": stats,
         "baselines": metrics,
+        "ego_baselines_l2_m": ego,
     }
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
     Path(args.output).write_text(json.dumps(report, indent=2), encoding="utf-8")
@@ -98,6 +114,17 @@ def main() -> None:
             f"| {key.replace('_', ' ').title()} | {m['ade']['1s']:.2f} | {m['ade']['2s']:.2f} "
             f"| {m['ade']['3s']:.2f} | {m['fde']['3s']:.2f} | {100 * m['miss_rate']['3s']:.1f}% |"
         )
+
+    for where, res in ego.items():
+        print(f"\nEgo baselines, past only, {where}: {res['num_windows']} windows")
+        print("| Method / Model | L2 @ 1s (m) | L2 @ 2s (m) | L2 @ 3s (m) | L2 Avg (m) |")
+        print("|---|:---:|:---:|:---:|:---:|")
+        for key, label in (
+            ("zero_motion", "Zero-Motion"),
+            ("constant_velocity", "Constant Velocity"),
+        ):
+            r = res[key]
+            print(f"| {label} | {r['1s']:.2f} | {r['2s']:.2f} | {r['3s']:.2f} | {r['avg']:.2f} |")
 
 
 if __name__ == "__main__":
