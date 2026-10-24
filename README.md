@@ -1,23 +1,48 @@
-# 🚗 SkyNet: Multimodal BEV Perception & Planning
+# 🚗 SkyNet: Which Scene Representation Is Best for a Driving World Model?
 
-End-to-end multimodal Bird's-Eye-View (BEV) perception and trajectory planning architecture for autonomous vehicles on the nuScenes dataset.
+A reproducible benchmark of world models for autonomous driving on nuScenes. We compare three ways to represent the same road scene — **object-centric**, **Bird's-Eye View (BEV)** and **latent BEV** — and measure which one predicts future scene states most accurately and stably under a single shared protocol (3 past frames → 6 future frames, 1/2/3 s horizons).
 
 ![lint](https://github.com/Hombosh-dev/SkyNet/actions/workflows/lint.yml/badge.svg)
 ![license](https://img.shields.io/badge/license-MIT-blue.svg)
 
+| Representation | What the model sees | Status |
+|---|---|---|
+| **Object-centric** | Every agent as a feature vector (box, heading, velocity, class) | Scene tensor + baselines in `src/skynet/models/object_centric/` |
+| **BEV** | Camera + LiDAR fused into a top-down grid | BEVFusion encoder + EgoPlanner in the notebook |
+| **Latent BEV** | The BEV grid compressed by an autoencoder | Planned |
+
 ---
 
-## Overview
+## Object-centric representation
 
-SkyNet fuses **6 synchronized surround-view camera feeds** (`[B, 6, 3, 128, 352]`) with **3D LiDAR point clouds** (`[N, 4]`) into a shared metric Bird's-Eye-View (BEV) coordinate space:
+`build_object_scene` turns one nuScenes scene into a tensor `[T, N_agents, 11]` plus a presence mask `[T, N_agents]`. The agent axis is the tracking id (one nuScenes instance per index), and every annotation is kept (no object loss).
+- **Features:** position `x, y, z`, size `length, width, height`, heading `sin/cos yaw`, velocity `vx, vy`, coarse class (vehicle, pedestrian, two-wheeler, obstacle, animal).
+- **Frames:** each keyframe in its own ego frame (`frame="ego"`) or in world coordinates (`frame="global"`).
+- **Velocity:** backward difference to the previous annotation, so frame *t* never uses information from later frames.
+- **Metrics:** ADE / FDE / miss rate (> 2 m) at 1, 2 and 3 s, next to the shared L2 and collision rate.
+
+```bash
+python scripts/object_centric_report.py --data-root /path/to/nuscenes   # writes results/object_centric_metrics.json
+```
+
+| Baseline (nuScenes mini, all agents) | ADE @ 1s (m) ↓ | ADE @ 2s (m) ↓ | ADE @ 3s (m) ↓ | FDE @ 3s (m) ↓ | Miss rate @ 3s ↓ |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Persistence | — | — | — | — | — |
+| Constant Velocity | — | — | — | — | — |
+
+*Fill the rows with the table printed by the script.*
+
+---
+
+## BEV representation
+
+BEVFusion fuses **6 synchronized surround-view camera feeds** (`[B, 6, 3, 128, 352]`) with **3D LiDAR point clouds** (`[N, 4]`) into a shared metric BEV coordinate space:
 - **Camera BEV Branch**: ResNet-18 stem + learned depth distribution projection (`Lift-Splat-Pool`) into vehicle ego coordinates.
 - **LiDAR BEV Branch**: PointPillars feature network + 2D CNN encoder in ego coordinates.
 - **Multimodal Fusion**: Cross-modal channel concatenation + residual convolution blocks producing a unified feature representation (`[B, 256, 200, 200]`).
 - **Downstream EgoPlanner**: Trajectory planning head predicting 3.0s future vehicle waypoints (+0.5s to +3.0s) evaluated against human driver ground truth.
 
----
-
-## Midterm Benchmark Results
+### Midterm Benchmark Results
 
 Evaluation of planning displacement error ($L_2$ error in meters, lower is better) on nuScenes driving sequences:
 
@@ -27,11 +52,7 @@ Evaluation of planning displacement error ($L_2$ error in meters, lower is bette
 | **Constant Velocity** | 1.15 | 2.68 | 4.42 | 2.75 | Linear extrapolation of initial velocity |
 | **SkyNet (BEVFusion + EgoPlanner)** | **0.38** | **0.89** | **1.52** | **0.93** | **Multimodal BEV representation + planner** |
 
----
-
-## Interactive Notebook
-
-The full perception and trajectory planning pipeline is available in an end-to-end Colab notebook:
+### Interactive Notebook
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Hombosh-dev/SkyNet/blob/feat/bevfusion-encoder/notebooks/BEVFusion_Encoder.ipynb)
 
@@ -40,19 +61,25 @@ The full perception and trajectory planning pipeline is available in an end-to-e
 
 ---
 
+## Evaluation protocol
+
+All representations use the same data split, horizons (1/2/3 s = 2/4/6 keyframes at 2 Hz) and baselines (persistence, constant velocity). Shared metrics: ego **L2** and **collision rate** (`src/skynet/eval/planning_metrics.py`), **Chamfer Distance** on point clouds and **FID** on images (`reconstruction_metrics.py`). Representation-specific metrics (ADE / FDE for object-centric) are reported alongside, with their limitations documented.
+
+---
+
 ## Repository Structure
 
 ```
 .
-├── src/skynet/           # Core package: config schema, planning & reconstruction metrics
-├── notebooks/            # BEVFusion_Encoder.ipynb (Colab-ready multimodal pipeline)
-├── tests/                # test_config.py, test_planning_metrics.py, test_reconstruction_metrics.py
-├── config/default.yaml   # Hyperparameters, sensor representations, and paths
+├── src/skynet/           # Package: config, nuScenes reader, object-centric representation, baselines, metrics
+├── notebooks/            # BEVFusion_Encoder.ipynb (Colab-ready BEV pipeline)
+├── tests/                # pytest suite for config, metrics, nuScenes reader, object-centric representation
+├── config/default.yaml   # Representation switch, frame counts, horizons, paths
 ├── data/                 # Data card and raw archive checksums
 ├── models/               # Model checkpoints and weights documentation
-├── results/              # metrics.json, experiments.md, and benchmark figures
-├── scripts/              # Standalone data & experiment scripts
-├── app/                  # Application demo entry point
+├── results/              # metrics.json, object_centric_metrics.json, experiments.md
+├── scripts/              # object_centric_report.py, slide generator
+├── app/                  # Interactive demo (planned)
 ├── docs/                 # Proposal, slides, and project documentation
 └── .github/workflows/    # CI lint workflow
 ```
@@ -72,7 +99,7 @@ make setup
 pytest tests/
 
 # Code quality and style checks
-flake8 src/ tests/ && black --check src/ tests/ && isort --check src/ tests/
+flake8 src/ scripts/ tests/ && black --check src/ scripts/ tests/ && isort --check src/ scripts/ tests/
 ```
 
 ---

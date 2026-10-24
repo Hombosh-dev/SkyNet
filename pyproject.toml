@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "skynet"
 version = "0.1.0"
-description = "SkyNet: Multimodal BEV Autonomous Driving Perception & Planning"
+description = "SkyNet: comparing object-centric, BEV and latent-BEV world models for autonomous driving"
 requires-python = ">=3.11"
 readme = "README.md"
 license = { text = "MIT" }
