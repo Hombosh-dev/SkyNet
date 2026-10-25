@@ -1,14 +1,16 @@
 cff-version: 1.2.0
 message: >-
   If you use this project, please cite it as below.
-title: "SkyNet: Multimodal BEV Autonomous Driving Perception & Planning"
+title: "SkyNet: Which Scene Representation Is Best for a Driving World Model?"
 version: 0.1.0
 date-released: "2026-10-24"
 type: software
 license: MIT
 repository-code: "https://github.com/Hombosh-dev/SkyNet"
 authors:
-  - family-names: "<Your Last Name>"
-    given-names: "<Your First Name>"
-  - family-names: "<Teammate Last Name>"
-    given-names: "<Teammate First Name>"
+  - family-names: "Bobas"
+    given-names: "Yurii"
+  - family-names: "Vasylchenko"
+    given-names: "Vladyslav"
+  - family-names: "Hombosh"
+    given-names: "Oleh"

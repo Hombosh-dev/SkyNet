@@ -1,0 +1,230 @@
+{
+  "generated_at": "2026-10-24 22:59 UTC",
+  "dataset": "nuScenes v1.0-mini",
+  "split": "all",
+  "features": [
+    "x",
+    "y",
+    "z",
+    "length",
+    "width",
+    "height",
+    "yaw_sin",
+    "yaw_cos",
+    "vx",
+    "vy",
+    "class_id"
+  ],
+  "all_scenes_lossless": true,
+  "scenes": {
+    "scene-0061": {
+      "keyframes": 39,
+      "agents": 227,
+      "annotations": 4699,
+      "in_tensor": 4699,
+      "no_object_loss": true,
+      "agents_per_frame_mean": 120.49,
+      "agents_per_frame_max": 156,
+      "tensor_shape": [
+        39,
+        227,
+        11
+      ]
+    },
+    "scene-0103": {
+      "keyframes": 40,
+      "agents": 123,
+      "annotations": 2090,
+      "in_tensor": 2090,
+      "no_object_loss": true,
+      "agents_per_frame_mean": 52.25,
+      "agents_per_frame_max": 65,
+      "tensor_shape": [
+        40,
+        123,
+        11
+      ]
+    },
+    "scene-0553": {
+      "keyframes": 41,
+      "agents": 57,
+      "annotations": 1991,
+      "in_tensor": 1991,
+      "no_object_loss": true,
+      "agents_per_frame_mean": 48.56,
+      "agents_per_frame_max": 53,
+      "tensor_shape": [
+        41,
+        57,
+        11
+      ]
+    },
+    "scene-0655": {
+      "keyframes": 41,
+      "agents": 140,
+      "annotations": 2373,
+      "in_tensor": 2373,
+      "no_object_loss": true,
+      "agents_per_frame_mean": 57.88,
+      "agents_per_frame_max": 76,
+      "tensor_shape": [
+        41,
+        140,
+        11
+      ]
+    },
+    "scene-0757": {
+      "keyframes": 41,
+      "agents": 29,
+      "annotations": 604,
+      "in_tensor": 604,
+      "no_object_loss": true,
+      "agents_per_frame_mean": 14.73,
+      "agents_per_frame_max": 18,
+      "tensor_shape": [
+        41,
+        29,
+        11
+      ]
+    },
+    "scene-0796": {
+      "keyframes": 40,
+      "agents": 51,
+      "annotations": 716,
+      "in_tensor": 716,
+      "no_object_loss": true,
+      "agents_per_frame_mean": 17.9,
+      "agents_per_frame_max": 28,
+      "tensor_shape": [
+        40,
+        51,
+        11
+      ]
+    },
+    "scene-0916": {
+      "keyframes": 41,
+      "agents": 95,
+      "annotations": 2424,
+      "in_tensor": 2424,
+      "no_object_loss": true,
+      "agents_per_frame_mean": 59.12,
+      "agents_per_frame_max": 74,
+      "tensor_shape": [
+        41,
+        95,
+        11
+      ]
+    },
+    "scene-1077": {
+      "keyframes": 41,
+      "agents": 72,
+      "annotations": 909,
+      "in_tensor": 909,
+      "no_object_loss": true,
+      "agents_per_frame_mean": 22.17,
+      "agents_per_frame_max": 31,
+      "tensor_shape": [
+        41,
+        72,
+        11
+      ]
+    },
+    "scene-1094": {
+      "keyframes": 40,
+      "agents": 85,
+      "annotations": 1776,
+      "in_tensor": 1776,
+      "no_object_loss": true,
+      "agents_per_frame_mean": 44.4,
+      "agents_per_frame_max": 65,
+      "tensor_shape": [
+        40,
+        85,
+        11
+      ]
+    },
+    "scene-1100": {
+      "keyframes": 40,
+      "agents": 32,
+      "annotations": 956,
+      "in_tensor": 956,
+      "no_object_loss": true,
+      "agents_per_frame_mean": 23.9,
+      "agents_per_frame_max": 26,
+      "tensor_shape": [
+        40,
+        32,
+        11
+      ]
+    }
+  },
+  "baselines": {
+    "persistence": {
+      "ade": {
+        "1s": 1.0687533904918112,
+        "2s": 1.721630337349061,
+        "3s": 2.326623722659263
+      },
+      "fde": {
+        "1s": 1.4228516197568537,
+        "2s": 2.747251029921351,
+        "3s": 3.9731935831097016
+      },
+      "miss_rate": {
+        "1s": 0.1327307016973402,
+        "2s": 0.3144976773209457,
+        "3s": 0.33169166480113427
+      }
+    },
+    "constant_velocity": {
+      "ade": {
+        "1s": 0.17929812758517358,
+        "2s": 0.329202055380764,
+        "3s": 0.4974015041862502
+      },
+      "fde": {
+        "1s": 0.24772607087234674,
+        "2s": 0.5763676480496924,
+        "3s": 0.9763908689691033
+      },
+      "miss_rate": {
+        "1s": 0.01632307992456266,
+        "2s": 0.06531234833252444,
+        "3s": 0.10663383329602269
+      }
+    },
+    "num_agent_windows": 16295
+  },
+  "ego_baselines_l2_m": {
+    "all": {
+      "num_windows": 334,
+      "zero_motion": {
+        "1s": 5.547443937929882,
+        "2s": 11.129704829630324,
+        "3s": 16.746063759677916,
+        "avg": 11.141070842412708
+      },
+      "constant_velocity": {
+        "1s": 0.3801909076364133,
+        "2s": 1.186490852718655,
+        "3s": 2.351166447436524,
+        "avg": 1.3059494025971974
+      }
+    },
+    "scene-0061 (as in the BEV notebook)": {
+      "num_windows": 32,
+      "zero_motion": {
+        "1s": 4.935988160116011,
+        "2s": 9.460925326146302,
+        "3s": 13.651171801820933,
+        "avg": 9.349361762694416
+      },
+      "constant_velocity": {
+        "1s": 0.5008416701066046,
+        "2s": 1.6141127210851463,
+        "3s": 3.292905968504285,
+        "avg": 1.8026201198986787
+      }
+    }
+  }
+}

@@ -1,42 +1,72 @@
-# 🚗 SkyNet: Multimodal BEV Perception & Planning
+# 🚗 SkyNet: Which Scene Representation Is Best for a Driving World Model?
 
-End-to-end multimodal Bird's-Eye-View (BEV) perception and trajectory planning architecture for autonomous vehicles on the nuScenes dataset.
+A reproducible benchmark of world models for autonomous driving on nuScenes. We compare three ways to represent the same road scene — **object-centric**, **Bird's-Eye View (BEV)** and **latent BEV** — and measure which one predicts future scene states most accurately and stably under a single shared protocol (3 past frames → 6 future frames, 1/2/3 s horizons).
 
 ![lint](https://github.com/Hombosh-dev/SkyNet/actions/workflows/lint.yml/badge.svg)
 ![license](https://img.shields.io/badge/license-MIT-blue.svg)
 
+| Representation | What the model sees | Status |
+|---|---|---|
+| **Object-centric** | Every agent as a feature vector (box, heading, velocity, class) | Scene tensor + baselines, `ObjectCentric_Representation.ipynb` |
+| **BEV** | Camera + LiDAR fused into a top-down grid | BEVFusion encoder + EgoPlanner in the notebook |
+| **Latent BEV** | The BEV grid compressed by an autoencoder | Planned |
+
 ---
 
-## Overview
+## Object-centric representation
 
-SkyNet fuses **6 synchronized surround-view camera feeds** (`[B, 6, 3, 128, 352]`) with **3D LiDAR point clouds** (`[N, 4]`) into a shared metric Bird's-Eye-View (BEV) coordinate space:
+`build_object_scene` turns one nuScenes scene into a tensor `[T, N_agents, 11]` plus a presence mask `[T, N_agents]`. The agent axis is the tracking id (one nuScenes instance per index), and every annotation is kept (no object loss).
+- **Features:** position `x, y, z`, size `length, width, height`, heading `sin/cos yaw`, velocity `vx, vy`, coarse class (vehicle, pedestrian, two-wheeler, obstacle, animal).
+- **Frames:** each keyframe in its own ego frame (`frame="ego"`) or in world coordinates (`frame="global"`).
+- **Velocity:** backward difference to the previous annotation, so frame *t* never uses information from later frames.
+- **Metrics:** ADE / FDE / miss rate (> 2 m) at 1, 2 and 3 s, next to the shared L2 and collision rate.
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/16u563lweQkuG8RH-uXsfLKUHejCCqkyN)
+
+* **Notebook:** [`notebooks/ObjectCentric_Representation.ipynb`](notebooks/ObjectCentric_Representation.ipynb), self-contained: fetches the nuScenes mini tables by itself, checks every scene for object loss, plots the agents, their forecasts and an animated scene, and prints the tables below.
+* **Script:** `python scripts/object_centric_report.py` finds nuScenes (or downloads the mini tables) and writes `results/object_centric_metrics.json`.
+
+| Baseline (nuScenes mini, all agents) | ADE @ 1s (m) ↓ | ADE @ 2s (m) ↓ | ADE @ 3s (m) ↓ | FDE @ 3s (m) ↓ | Miss rate @ 3s ↓ |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Persistence | 1.07 | 1.72 | 2.33 | 3.97 | 33.2% |
+| Constant Velocity | **0.18** | **0.33** | **0.50** | **0.98** | **10.7%** |
+
+All 10 mini scenes convert without object loss (18,538 annotations → 18,538 tensor entries; e.g. scene-0061 is `[39, 227, 11]`); 16,295 agent windows are evaluated. Constant velocity cuts the 3 s endpoint error 4× compared with persistence, so it is the bar for a learned object-centric model. Absolute errors are small because many agents are static (barriers, cones, parked cars), for which persistence is exact; the 10.7% misses are agents that turn, brake or start moving, or are seen for the first time at t0 (velocity still unknown, so it is 0).
+
+---
+
+## BEV representation
+
+BEVFusion fuses **6 synchronized surround-view camera feeds** (`[B, 6, 3, 128, 352]`) with **3D LiDAR point clouds** (`[N, 4]`) into a shared metric BEV coordinate space:
 - **Camera BEV Branch**: ResNet-18 stem + learned depth distribution projection (`Lift-Splat-Pool`) into vehicle ego coordinates.
 - **LiDAR BEV Branch**: PointPillars feature network + 2D CNN encoder in ego coordinates.
 - **Multimodal Fusion**: Cross-modal channel concatenation + residual convolution blocks producing a unified feature representation (`[B, 256, 200, 200]`).
-- **Downstream EgoPlanner**: Trajectory planning head predicting 3.0s future vehicle waypoints (+0.5s to +3.0s) evaluated against human driver ground truth.
+- **Downstream EgoPlanner**: Trajectory planning head predicting 3.0s future vehicle waypoints (+0.5s to +3.0s) from the fused BEV and the past ego velocity, evaluated against human driver ground truth.
 
----
+### Benchmark Results
 
-## Midterm Benchmark Results
-
-Evaluation of planning displacement error ($L_2$ error in meters, lower is better) on nuScenes driving sequences:
+Planning displacement error ($L_2$ in meters, lower is better) on the held-out nuScenes `mini_val` scenes; the EgoPlanner is trained on `mini_train` (encoder frozen) and gets the ego velocity measured from the previous keyframe:
 
 | Method / Model | L2 @ 1s (m) ↓ | L2 @ 2s (m) ↓ | L2 @ 3s (m) ↓ | L2 Avg (m) ↓ | Description |
 |---|:---:|:---:|:---:|:---:|---|
-| **Zero-Motion Baseline** | 4.82 | 9.94 | 15.31 | 10.02 | Stationary vehicle assumption ($x=0, y=0$) |
-| **Constant Velocity** | 1.15 | 2.68 | 4.42 | 2.75 | Linear extrapolation of initial velocity |
-| **SkyNet (BEVFusion + EgoPlanner)** | **0.38** | **0.89** | **1.52** | **0.93** | **Multimodal BEV representation + planner** |
+| **Zero-Motion Baseline** | 5.23 | 10.43 | 15.55 | 10.40 | Stationary vehicle assumption ($x=0, y=0$) |
+| **Constant Velocity** | **0.69** | **2.20** | **4.46** | **2.45** | Linear extrapolation of the last observed velocity (past only) |
+| **SkyNet (BEVFusion + EgoPlanner)** | 0.80 | 2.56 | 5.06 | 2.81 | **Multimodal BEV + ego velocity, planner trained on `mini_train`** |
 
----
+67 keyframes of the 2 held-out scenes; the planner was trained on 267 keyframes of `mini_train`. The planner does **not** beat constant velocity yet (+15% average L2): it fits the training set (train L1 0.11 m) but the encoder has no trained weights, so the BEV features carry little usable scene information and the learned correction does not generalise. Both are far ahead of zero motion (the ego drives ~10 m/s), and the error grows ~6× from 1 s to 3 s. The midterm numbers (one training scene, constant velocity read from the first future waypoint, planner output replaced by ground truth + noise) are kept in [`results/experiments.md`](results/experiments.md) for reference.
 
-## Interactive Notebook
+### Interactive Notebook
 
-The full perception and trajectory planning pipeline is available in an end-to-end Colab notebook:
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Hombosh-dev/SkyNet/blob/feat/bevfusion-encoder/notebooks/BEVFusion_Encoder.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1YeEyVRbss4Hso4vLeKOXteIkVWSV40oY)
 
 * **Location:** [`notebooks/BEVFusion_Encoder.ipynb`](notebooks/BEVFusion_Encoder.ipynb)
 * **Zero-Touch Execution:** Automatically downloads and unpacks nuScenes mini if not present, runs multimodal forward pass, verifies acceptance criteria, benchmarks baselines, and generates animated driving simulations.
+
+---
+
+## Evaluation protocol
+
+All representations use the same data split, horizons (1/2/3 s = 2/4/6 keyframes at 2 Hz) and baselines (persistence, constant velocity). Shared metrics: ego **L2** and **collision rate** (`src/skynet/eval/planning_metrics.py`), **Chamfer Distance** on point clouds and **FID** on images (`reconstruction_metrics.py`). Representation-specific metrics (ADE / FDE for object-centric) are reported alongside, with their limitations documented.
 
 ---
 
@@ -44,15 +74,15 @@ The full perception and trajectory planning pipeline is available in an end-to-e
 
 ```
 .
-├── src/skynet/           # Core package: config schema, planning & reconstruction metrics
-├── notebooks/            # BEVFusion_Encoder.ipynb (Colab-ready multimodal pipeline)
-├── tests/                # test_config.py, test_planning_metrics.py, test_reconstruction_metrics.py
-├── config/default.yaml   # Hyperparameters, sensor representations, and paths
+├── src/skynet/           # Package: config, nuScenes reader/download, object-centric representation, baselines, metrics
+├── notebooks/            # BEVFusion_Encoder.ipynb (BEV), ObjectCentric_Representation.ipynb (object-centric)
+├── tests/                # pytest suite for config, metrics, nuScenes reader, object-centric representation
+├── config/default.yaml   # Representation switch, frame counts, horizons, paths
 ├── data/                 # Data card and raw archive checksums
 ├── models/               # Model checkpoints and weights documentation
-├── results/              # metrics.json, experiments.md, and benchmark figures
-├── scripts/              # Standalone data & experiment scripts
-├── app/                  # Application demo entry point
+├── results/              # metrics.json, object_centric_metrics.json, experiments.md
+├── scripts/              # object_centric_report.py, slide generator
+├── app/                  # Interactive demo (planned)
 ├── docs/                 # Proposal, slides, and project documentation
 └── .github/workflows/    # CI lint workflow
 ```
@@ -72,7 +102,7 @@ make setup
 pytest tests/
 
 # Code quality and style checks
-flake8 src/ tests/ && black --check src/ tests/ && isort --check src/ tests/
+flake8 src/ scripts/ tests/ && black --check src/ scripts/ tests/ && isort --check src/ scripts/ tests/
 ```
 
 ---
