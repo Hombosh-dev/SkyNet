@@ -1,4 +1,4 @@
-"""Generate the progress-review deck: Bobas_Vasylchenko_Hombosh_Progress.pptx / .pdf.
+"""Generate the progress-review deck: Midterm_Presentation_Bobas_Vasylchenko_Hombosh.pptx / .pdf.
 
 Run from the repository root:
 
@@ -23,7 +23,7 @@ from pptx.util import Inches, Pt
 
 HERE = Path(__file__).resolve().parent
 FIGURES = HERE / "figures"
-OUT_PPTX = HERE / "Bobas_Vasylchenko_Hombosh_Progress.pptx"
+OUT_PPTX = HERE / "Midterm_Presentation_Bobas_Vasylchenko_Hombosh.pptx"
 TOTAL = 7
 FONT = "Calibri"
 
@@ -324,14 +324,14 @@ models = [
     (
         "Object-centric",
         GREEN,
-        "кожен агент — вектор: положення, розмір, курс, швидкість, клас",
+        "кожен обʼєкт — вектор: положення, розмір, курс, швидкість, клас",
         "найкомпактніший та інтерпретований опис сцени",
     ),
     (
         "BEV (BEVFusion)",
         AMBER,
         "6 камер (Lift-Splat) + LiDAR (PointPillars) в одну карту зверху 100\u00a0×\u00a0100\u00a0м",
-        "поширений підхід до злиття сенсорів; вміщається в GPU Colab",
+        "популярна архітектура для об'єднання камер і LiDAR; достатньо легка для безкоштовного GPU в Colab",
     ),
     (
         "Latent BEV",
@@ -343,7 +343,7 @@ models = [
 cw = (12.13 - 2 * 0.3) / 3
 for k, (name, color, what, why) in enumerate(models):
     x = 0.6 + k * (cw + 0.3)
-    card(s, x, 3.85, cw, 2.6)
+    card(s, x, 3.85, cw, 2.85)
     pill(s, x + 0.2, 4.05, name, color, size=12)
     text(
         s,
@@ -383,7 +383,7 @@ table(
     [
         ["Метрика", "Що вимірює", "Для чого"],
         ["L2 @ 1/2/3 с", "відхилення траєкторії авто, м", "BEV, усі"],
-        ["Collision rate", "перетин авто з іншими агентами", "усі"],
+        ["Collision rate", "перетин авто з іншими обʼєктами", "усі"],
         ["ADE / FDE / Miss", "похибка прогнозу агентів, м; промахи >2 м", "object-centric"],
         ["Chamfer distance", "збіг хмар точок", "BEV, latent BEV"],
     ],
@@ -403,7 +403,6 @@ text(
     [
         [("Zero-motion / Persistence: ", {"bold": True}), ("сцена не змінюється", {})],
         [("Constant velocity (CV): ", {"bold": True}), ("остання виміряна швидкість", {})],
-        [("Ego-status MLP (план): ", {"bold": True}), ("чи не вирішує все сама швидкість его", {})],
     ],
     size=16,
     space_after=12,
@@ -482,7 +481,7 @@ text(
     2.2 + 6.23 * 385 / 684 + 0.12,
     6.23,
     0.6,
-    ["Тестова сцена: жовте — водій, зелене — прогноз (у PPTX — анімація)"],
+    ["Тестова сцена: жовте — водій, зелене — прогноз"],
     size=13,
     color=MUTED,
 )
@@ -492,8 +491,9 @@ text(
 s = new_slide(
     5,
     "РЕЗУЛЬТАТИ · OBJECT-CENTRIC",
-    "Object-centric: сцена без втрат, CV — сильний бейзлайн",
-    "Усі 10 сцен mini, 16\u00a0295 вікон агентів, похибка в метрах (менше — краще)",
+    "Object-centric: Constant Velocity — сильний бейзлайн",
+    "Усі 10 сцен mini, 16\u00a0295 прогнозів (обʼєкт × момент часу), похибка в метрах "
+    "(чим менше — тим краще)",
     badge_color=GREEN,
     notes=(
         "Доповідає: Юрій. 45 с. Кожну сцену перетворюємо на тензор: кадри × агенти × 11 ознак; "
@@ -502,17 +502,17 @@ s = new_slide(
         "constant velocity, жовте — реальний рух: вони розходяться на поворотах і при гальмуванні."
     ),
 )
-card(s, 0.6, 2.2, 6.5, 1.0)
+card(s, 0.6, 1.95, 6.5, 0.95)
 text(
     s,
     0.85,
-    2.35,
+    2.08,
     6.0,
     1.0,
     [
         [
             ("Тензор сцени: ", {"bold": True, "color": MUTED}),
-            ("[кадри, агенти, 11 ознак], напр. [39, 227, 11]", {}),
+            ("[кадри, обʼєкти, 11 ознак], напр. [39, 227, 11]", {}),
         ],
         [
             ("Перевірка: ", {"bold": True, "color": MUTED}),
@@ -522,10 +522,24 @@ text(
     size=15,
     space_after=6,
 )
+text(
+    s,
+    0.6,
+    3.02,
+    6.5,
+    0.6,
+    [
+        [
+            ("Бейзлайни в object-centric представленні ", {"bold": True}),
+            ("(навчена модель — наш плановий наступний етап)", {"color": MUTED}),
+        ]
+    ],
+    size=14,
+)
 table(
     s,
     0.6,
-    3.5,
+    3.68,
     6.5,
     [
         ["Бейзлайн", "ADE 1 с", "ADE 3 с", "FDE 3 с", "Miss 3 с"],
@@ -540,13 +554,18 @@ table(
 text(
     s,
     0.6,
-    5.55,
+    5.65,
     6.5,
     0.9,
     [
         [
             ("Висновок: ", {"bold": True, "color": GREEN}),
-            ("CV у 4× точніша за persistence; помиляється на поворотах і гальмуванні", {}),
+            (
+                "Constant velocity: у середньому 0.98 м похибки через 3 с, у 4 рази точніше за "
+                "persistence; помиляється на поворотах і гальмуванні. Це планка для нашої "
+                "object-centric моделі.",
+                {},
+            ),
         ]
     ],
     size=16,
@@ -595,17 +614,15 @@ people = [
     (
         "Олег Гомбош",
         "Репозиторій і CI, конфіг-схема, метрики L2 / collision / Chamfer / FID з тестами, "
-        "persistence-бейзлайн",
+        "persistence-бейзлайн, візуалізації (камера, BEV, GIF)",
     ),
     (
         "Владислав Васильченко",
-        "nuScenes-лоадер, BEVFusion-енкодер і EgoPlanner, візуалізації (камера, BEV, GIF), "
-        "слайди мідтерму",
+        "nuScenes-лоадер, BEVFusion-енкодер і EgoPlanner, слайди презентації",
     ),
     (
         "Юрій Бобас",
-        "Object-centric представлення, ADE/FDE, ноутбук; аудит і виправлення методології BEV, "
-        "навчання планера",
+        "Object-centric представлення, ADE/FDE, огляд і виправлення методології BEV-енкодера",
     ),
 ]
 for k, (name, what) in enumerate(people):
@@ -649,19 +666,20 @@ phases = [
     (
         "Листопад II",
         "Object-centric модель",
-        "нейромережа по треках агентів; спільна BEV-карта зайнятості",
+        "нейромережа прогнозує рух кожного агента за його минулими положеннями",
     ),
     (
         "Грудень I",
         "Latent BEV + масштаб",
-        "автоенкодер + прогноз у латентному просторі; до 150 сцен trainval",
+        "автоенкодер + прогноз у латентному просторі; прогнози всіх трьох підходів зводимо до "
+        "однієї карти зверху",
     ),
     ("Грудень II", "Стрес-тести і демо", "зсув его на 0.5 м, чутливість до дії водія, демо, звіт"),
 ]
 pw = (12.13 - 3 * 0.25) / 4
 for k, (when, head, body) in enumerate(phases):
     x = 0.6 + k * (pw + 0.25)
-    card(s, x, 2.2, pw, 2.2)
+    card(s, x, 2.2, pw, 2.4)
     pill(s, x + 0.2, 2.38, when, VIOLET, w=1.45, size=11)
     text(
         s,
@@ -670,7 +688,7 @@ for k, (when, head, body) in enumerate(phases):
         pw - 0.4,
         1.5,
         [[(head, {"bold": True, "size": 16})], body],
-        size=15,
+        size=14,
         space_after=4,
     )
 for k, (head, color, lines) in enumerate(
@@ -681,14 +699,15 @@ for k, (head, color, lines) in enumerate(
             [
                 "train: mini_train, тест: mini_val",
                 "early stopping на окремій train-сцені",
-                "3 seeds, порівняння з CV",
+                "3 запуски з різним seed (середнє ± розкид), порівняння з constant velocity",
             ],
         ),
         (
             "План Б",
             AMBER,
             [
-                "дифузія не вміщається в GPU → простіший прогноз у латентному просторі",
+                "дифузійна модель (як у BEVWorld) завелика для GPU Colab → проста нейромережа, що "
+                "прогнозує стиснену карту напряму",
                 "енкодер не вчиться → BEV-карта з анотацій",
             ],
         ),
@@ -699,11 +718,12 @@ for k, (head, color, lines) in enumerate(
         ),
     ]
 ):
-    w = (12.13 - 2 * 0.25) / 3
-    x = 0.6 + k * (w + 0.25)
-    card(s, x, 4.6, w, 2.1)
-    text(s, x + 0.2, 4.75, w - 0.4, 0.4, [[(head, {"bold": True, "color": color})]], size=17)
-    text(s, x + 0.2, 5.2, w - 0.4, 1.45, lines, size=15, space_after=4, bullets=True)
+    widths = (3.85, 4.53, 3.25)  # the plan-B column carries the longest text
+    w = widths[k]
+    x = 0.6 + sum(widths[:k]) + 0.25 * k
+    card(s, x, 4.75, w, 2.0)
+    text(s, x + 0.2, 4.87, w - 0.4, 0.4, [[(head, {"bold": True, "color": color})]], size=17)
+    text(s, x + 0.2, 5.3, w - 0.4, 1.4, lines, size=14, space_after=3, bullets=True)
 
 # --------------------------------------------------------------------------- save
 
