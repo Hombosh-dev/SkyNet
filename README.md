@@ -28,10 +28,10 @@ A reproducible benchmark of world models for autonomous driving on nuScenes. We 
 
 | Baseline (nuScenes mini, all agents) | ADE @ 1s (m) ↓ | ADE @ 2s (m) ↓ | ADE @ 3s (m) ↓ | FDE @ 3s (m) ↓ | Miss rate @ 3s ↓ |
 |---|:---:|:---:|:---:|:---:|:---:|
-| Persistence | — | — | — | — | — |
-| Constant Velocity | — | — | — | — | — |
+| Persistence | 1.07 | 1.72 | 2.33 | 3.97 | 33.2% |
+| Constant Velocity | **0.18** | **0.33** | **0.50** | **0.98** | **10.7%** |
 
-*Fill the rows with the table printed by the notebook or the script.*
+All 10 mini scenes convert without object loss (18,538 annotations → 18,538 tensor entries; e.g. scene-0061 is `[39, 227, 11]`); 16,295 agent windows are evaluated. Constant velocity cuts the 3 s endpoint error 4× compared with persistence, so it is the bar for a learned object-centric model. Absolute errors are small because many agents are static (barriers, cones, parked cars), for which persistence is exact; the 10.7% misses are agents that turn, brake or start moving, or are seen for the first time at t0 (velocity still unknown, so it is 0).
 
 ---
 
@@ -49,11 +49,11 @@ Planning displacement error ($L_2$ in meters, lower is better) on the held-out n
 
 | Method / Model | L2 @ 1s (m) ↓ | L2 @ 2s (m) ↓ | L2 @ 3s (m) ↓ | L2 Avg (m) ↓ | Description |
 |---|:---:|:---:|:---:|:---:|---|
-| **Zero-Motion Baseline** | — | — | — | — | Stationary vehicle assumption ($x=0, y=0$) |
-| **Constant Velocity** | — | — | — | — | Linear extrapolation of the last observed velocity (past only) |
-| **SkyNet (BEVFusion + EgoPlanner)** | — | — | — | — | **Multimodal BEV + ego velocity, planner trained on `mini_train`** |
+| **Zero-Motion Baseline** | 5.23 | 10.43 | 15.55 | 10.40 | Stationary vehicle assumption ($x=0, y=0$) |
+| **Constant Velocity** | **0.69** | **2.20** | **4.46** | **2.45** | Linear extrapolation of the last observed velocity (past only) |
+| **SkyNet (BEVFusion + EgoPlanner)** | 0.80 | 2.56 | 5.06 | 2.81 | **Multimodal BEV + ego velocity, planner trained on `mini_train`** |
 
-*Fill from the benchmark cell of the notebook after Run All.* The midterm numbers (one training scene, constant velocity read from the first future waypoint, planner output replaced by ground truth + noise) are kept in [`results/experiments.md`](results/experiments.md) for reference.
+67 keyframes of the 2 held-out scenes; the planner was trained on 267 keyframes of `mini_train`. The planner does **not** beat constant velocity yet (+15% average L2): it fits the training set (train L1 0.11 m) but the encoder has no trained weights, so the BEV features carry little usable scene information and the learned correction does not generalise. Both are far ahead of zero motion (the ego drives ~10 m/s), and the error grows ~6× from 1 s to 3 s. The midterm numbers (one training scene, constant velocity read from the first future waypoint, planner output replaced by ground truth + noise) are kept in [`results/experiments.md`](results/experiments.md) for reference.
 
 ### Interactive Notebook
 
