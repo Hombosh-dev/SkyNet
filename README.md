@@ -41,19 +41,19 @@ BEVFusion fuses **6 synchronized surround-view camera feeds** (`[B, 6, 3, 128, 3
 - **Camera BEV Branch**: ResNet-18 stem + learned depth distribution projection (`Lift-Splat-Pool`) into vehicle ego coordinates.
 - **LiDAR BEV Branch**: PointPillars feature network + 2D CNN encoder in ego coordinates.
 - **Multimodal Fusion**: Cross-modal channel concatenation + residual convolution blocks producing a unified feature representation (`[B, 256, 200, 200]`).
-- **Downstream EgoPlanner**: Trajectory planning head predicting 3.0s future vehicle waypoints (+0.5s to +3.0s) evaluated against human driver ground truth.
+- **Downstream EgoPlanner**: Trajectory planning head predicting 3.0s future vehicle waypoints (+0.5s to +3.0s) from the fused BEV and the past ego velocity, evaluated against human driver ground truth.
 
-### Midterm Benchmark Results
+### Benchmark Results
 
-Evaluation of planning displacement error ($L_2$ error in meters, lower is better) on nuScenes driving sequences:
+Planning displacement error ($L_2$ in meters, lower is better) on the held-out nuScenes `mini_val` scenes; the EgoPlanner is trained on `mini_train` (encoder frozen) and gets the ego velocity measured from the previous keyframe:
 
 | Method / Model | L2 @ 1s (m) ↓ | L2 @ 2s (m) ↓ | L2 @ 3s (m) ↓ | L2 Avg (m) ↓ | Description |
 |---|:---:|:---:|:---:|:---:|---|
-| **Zero-Motion Baseline** | 4.82 | 9.94 | 15.31 | 10.02 | Stationary vehicle assumption ($x=0, y=0$) |
+| **Zero-Motion Baseline** | — | — | — | — | Stationary vehicle assumption ($x=0, y=0$) |
 | **Constant Velocity** | — | — | — | — | Linear extrapolation of the last observed velocity (past only) |
-| **SkyNet (BEVFusion + EgoPlanner)** | **0.38** | **0.89** | **1.52** | **0.93** | **Multimodal BEV representation + planner** |
+| **SkyNet (BEVFusion + EgoPlanner)** | — | — | — | — | **Multimodal BEV + ego velocity, planner trained on `mini_train`** |
 
-The constant-velocity row is being recomputed: the notebook version took its velocity from the first future waypoint. The past-only replacement (`src/skynet/baselines/ego.py`) is printed by the object-centric notebook and script.
+*Fill from the benchmark cell of the notebook after Run All.* The midterm numbers (one training scene, constant velocity read from the first future waypoint, planner output replaced by ground truth + noise) are kept in [`results/experiments.md`](results/experiments.md) for reference.
 
 ### Interactive Notebook
 

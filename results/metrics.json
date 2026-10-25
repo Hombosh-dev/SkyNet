@@ -3,6 +3,29 @@
   "seed": 42,
   "dataset": "nuScenes v1.0-mini",
   "planning_metrics": {
+    "protocol": "mini_val (scene-0103, scene-0916); EgoPlanner trained on mini_train; past-only baselines",
+    "zero_motion_baseline": {
+      "L2_1s_m": null,
+      "L2_2s_m": null,
+      "L2_3s_m": null,
+      "L2_avg_m": null
+    },
+    "constant_velocity_baseline": {
+      "L2_1s_m": null,
+      "L2_2s_m": null,
+      "L2_3s_m": null,
+      "L2_avg_m": null
+    },
+    "bevfusion_egoplanner": {
+      "L2_1s_m": null,
+      "L2_2s_m": null,
+      "L2_3s_m": null,
+      "L2_avg_m": null
+    },
+    "note": "fill from the benchmark cell of notebooks/BEVFusion_Encoder.ipynb"
+  },
+  "midterm_planning_metrics_withdrawn": {
+    "reason": "scene-0061 (training scene) only; constant velocity from the first future waypoint; planner output replaced by ground truth + noise",
     "zero_motion_baseline": {
       "L2_1s_m": 4.82,
       "L2_2s_m": 9.94,
@@ -10,11 +33,10 @@
       "L2_avg_m": 10.02
     },
     "constant_velocity_baseline": {
-      "L2_1s_m": null,
-      "L2_2s_m": null,
-      "L2_3s_m": null,
-      "L2_avg_m": null,
-      "note": "recompute with the past-only baseline (src/skynet/baselines/ego.py); the previous values used the first future waypoint"
+      "L2_1s_m": 1.15,
+      "L2_2s_m": 2.68,
+      "L2_3s_m": 4.42,
+      "L2_avg_m": 2.75
     },
     "bevfusion_egoplanner": {
       "L2_1s_m": 0.38,

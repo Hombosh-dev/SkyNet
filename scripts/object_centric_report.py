@@ -29,7 +29,7 @@ from skynet.baselines.ego import evaluate_ego_baselines
 from skynet.baselines.object_centric import BASELINES, forecast_windows
 from skynet.config import load_config
 from skynet.data.download import find_or_download
-from skynet.data.nuscenes import NuScenesTables
+from skynet.data.nuscenes import MINI_SPLITS, NuScenesTables
 from skynet.eval.object_metrics import displacement_errors
 from skynet.models.object_centric.scene_repr import FEATURES, build_object_scene
 
@@ -85,8 +85,10 @@ def main() -> None:
     stats = {name: scene_stats(tables, name) for name in names}
     metrics = evaluate(tables, names, cfg["data"]["future_frames"])
     ego = {args.split: evaluate_ego_baselines(tables, names)}
-    if "scene-0061" in tables.scene_by_name:  # the scene the BEV notebook benchmarks on
-        ego["scene-0061 (as in the BEV notebook)"] = evaluate_ego_baselines(tables, ["scene-0061"])
+    if all(n in tables.scene_by_name for n in MINI_SPLITS["mini_val"]):  # BEV notebook protocol
+        ego["mini_val (as in the BEV notebook)"] = evaluate_ego_baselines(
+            tables, MINI_SPLITS["mini_val"]
+        )
 
     report = {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
