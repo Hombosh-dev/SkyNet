@@ -21,7 +21,7 @@ A reproducible benchmark of world models for autonomous driving on nuScenes. We 
 - **Velocity:** backward difference to the previous annotation, so frame *t* never uses information from later frames.
 - **Metrics:** ADE / FDE / miss rate (> 2 m) at 1, 2 and 3 s, next to the shared L2 and collision rate.
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Hombosh-dev/SkyNet/blob/feat/object-centric-repr/notebooks/ObjectCentric_Representation.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/16u563lweQkuG8RH-uXsfLKUHejCCqkyN)
 
 * **Notebook:** [`notebooks/ObjectCentric_Representation.ipynb`](notebooks/ObjectCentric_Representation.ipynb), self-contained: fetches the nuScenes mini tables by itself, checks every scene for object loss, plots the agents, their forecasts and an animated scene, and prints the tables below.
 * **Script:** `python scripts/object_centric_report.py` finds nuScenes (or downloads the mini tables) and writes `results/object_centric_metrics.json`.
@@ -57,7 +57,7 @@ Planning displacement error ($L_2$ in meters, lower is better) on the held-out n
 
 ### Interactive Notebook
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Hombosh-dev/SkyNet/blob/feat/bevfusion-encoder/notebooks/BEVFusion_Encoder.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1YeEyVRbss4Hso4vLeKOXteIkVWSV40oY)
 
 * **Location:** [`notebooks/BEVFusion_Encoder.ipynb`](notebooks/BEVFusion_Encoder.ipynb)
 * **Zero-Touch Execution:** Automatically downloads and unpacks nuScenes mini if not present, runs multimodal forward pass, verifies acceptance criteria, benchmarks baselines, and generates animated driving simulations.
