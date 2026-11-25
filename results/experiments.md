@@ -87,3 +87,44 @@ keyframes).
 ## Latent BEV representation
 
 Planned.
+
+## OOD stress test (0.5 m lateral ego shift)
+
+Evaluates how each scene representation (`object_centric`, `bev`, `latent_bev`) degrades when the
+ego pose in held-out test scenes (`mini_val`: `scene-0103`, `scene-0916`; 65 windows) is
+shifted laterally by `+0.5 m` along the ego `+y` (left) axis using `shift_nuscenes_ego`.
+Reference predictors (`src/skynet/eval/ood.py`) are trained on `mini_train` (259 windows, `P=3`
+past frames → `N=6` future frames, `seed=42`, `epochs=25`, `100 × 100` BEV grid over
+`[-50, 50] m` at `1.0 m` resolution) and scored via `python scripts/ood_stress_test.py`
+(`results/ood_stress_test.json`). FID uses `feature=64` over the 390 `mini_val` future frames
+(`% Drop = 100 * (shifted - baseline) / baseline`; positive `%` indicates accuracy degradation).
+
+| Representation | CD 0m (m) ↓ | CD 0.5m (m) ↓ | % CD Drop (Δ%) | FID 0m ↓ | FID 0.5m ↓ | % FID Drop (Δ%) |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| Object-centric | 1.510 | 1.523 | +0.86% | 0.00 | 0.00 | +2.42% |
+| BEV | 2.987 | 2.997 | +0.33% | 2.05 | 2.07 | +1.08% |
+| Latent BEV | 8.820 | 8.794 | -0.29% | 2.97 | 3.15 | +6.10% |
+
+Per-horizon Chamfer Distance (m):
+
+| Representation | Split | CD @ 1s | CD @ 2s | CD @ 3s | CD Avg |
+|---|---|:---:|:---:|:---:|:---:|
+| Object-centric | 0m (baseline) | 0.776 | 1.517 | 2.236 | 1.510 |
+| Object-centric | 0.5m (shifted) | 0.776 | 1.521 | 2.271 | 1.523 |
+| BEV | 0m (baseline) | 2.384 | 3.016 | 3.561 | 2.987 |
+| BEV | 0.5m (shifted) | 2.394 | 3.019 | 3.579 | 2.997 |
+| Latent BEV | 0m (baseline) | 8.637 | 8.866 | 8.957 | 8.820 |
+| Latent BEV | 0.5m (shifted) | 8.555 | 8.900 | 8.927 | 8.794 |
+
+**Findings.**
+- **Object-centric** achieves the lowest baseline error (1.510 m CD, 0.0032 FID) because
+  continuous coordinates avoid grid quantization; under the 0.5 m ego shift its CD increases by
+  `+0.86%` (mainly at 3 s: 2.236 → 2.271 m) and FID rises `+2.42%` (0.00317 → 0.00325).
+- **BEV** (`BEVWorldPredictor` U-Net) is translation-equivariant up to the 1.0 m grid
+  discretization, showing the smallest FID increase (`+1.08%`) and a `+0.33%` CD drop.
+- **Latent BEV** (`LatentBEVPredictor` 64-d autoencoder + latent denoiser) loses spatial
+  precision in the bottleneck (8.820 m baseline CD, so the 0.5 m shift is within noise at
+  `-0.29%` CD) while showing the largest perceptual distribution shift (`+6.10%` FID).
+- These numbers come from the self-contained reference predictors in `src/skynet/eval/ood.py`;
+  standalone checkpoints from Issues #11, #13, and #15 can be evaluated with the same
+  `OODPredictor` interface via `evaluate_ood_shift`.
