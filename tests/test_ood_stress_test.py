@@ -7,7 +7,10 @@ import torch
 
 from skynet.eval.ood import (
     BEVSpec,
+    SceneWindow,
+    bev_to_point_cloud,
     boxes_to_bev,
+    boxes_to_point_cloud,
     evaluate_ood_shift,
     extract_scene_windows,
     format_ood_markdown_table,
@@ -16,9 +19,23 @@ from skynet.eval.ood import (
     shift_nuscenes_ego,
     shift_object_features,
     shift_point_cloud,
-    train_reference_models,
 )
 from skynet.models.object_centric.scene_repr import FEATURES, build_object_scene
+
+
+class _StaticAnchorPredictor:
+    """Minimal deterministic OODPredictor stub for testing the evaluation harness."""
+
+    def __init__(self, spec: BEVSpec):
+        self.spec = spec
+
+    def predict_window(self, window: SceneWindow) -> tuple[list[torch.Tensor], torch.Tensor]:
+        n_steps = window.gt_bev.shape[0]
+        last_bev = window.past_bev[-1]
+        pts = bev_to_point_cloud(last_bev, self.spec)
+        return [pts.clone() for _ in range(n_steps)], last_bev.unsqueeze(0).expand(
+            n_steps, -1, -1, -1
+        ).clone()
 
 
 def test_shift_point_cloud_shifts_only_lateral_y():
@@ -101,6 +118,13 @@ def test_shift_bev_grid_matches_shifted_boxes():
     assert com_after - com_before == pytest.approx(-0.5, abs=0.05)
 
 
+def test_boxes_to_point_cloud_empty_and_out_of_bounds():
+    spec = BEVSpec(x_range=(-10.0, 10.0), y_range=(-10.0, 10.0), resolution_m=1.0)
+    assert boxes_to_point_cloud(torch.empty((0, 6)), spec).shape == (0, 3)
+    far = torch.tensor([[100.0, 0.0, 4.0, 2.0, 0.0, 0.0]])
+    assert boxes_to_point_cloud(far, spec).shape == (0, 3)
+
+
 def test_relative_drop_pct():
     assert relative_drop_pct(2.0, 2.5) == pytest.approx(25.0)
     assert relative_drop_pct(2.0, 1.5) == pytest.approx(-25.0)
@@ -109,7 +133,7 @@ def test_relative_drop_pct():
     assert math.isinf(relative_drop_pct(0.0, 1.0))
 
 
-def test_end_to_end_ood_evaluation_and_markdown_table(make_nuscenes):
+def test_ood_evaluation_harness_and_markdown_table(make_nuscenes):
     root = make_nuscenes(num_samples=12, scene_name="scene-0103")
     from skynet.data.nuscenes import NuScenesTables
 
@@ -120,19 +144,14 @@ def test_end_to_end_ood_evaluation_and_markdown_table(make_nuscenes):
     )
     assert len(windows) == 4
 
-    predictors = train_reference_models(
-        windows,
-        past_frames=3,
-        future_frames=6,
-        spec=spec,
-        seed=42,
-        epochs=2,
-        diffusion_steps=3,
-    )
-
     def _fast_fid(real: torch.Tensor, fake: torch.Tensor) -> float:
         return float(((real.mean(dim=0) - fake.mean(dim=0)) ** 2).sum().item() * 100.0 + 1.0)
 
+    predictors = {
+        "object_centric": _StaticAnchorPredictor(spec),
+        "bev": _StaticAnchorPredictor(spec),
+        "latent_bev": _StaticAnchorPredictor(spec),
+    }
     results = evaluate_ood_shift(
         predictors,
         synth_tables,
